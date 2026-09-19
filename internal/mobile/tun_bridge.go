@@ -67,10 +67,8 @@ const (
 	// tcpDialTimeout — timeout for dialling the local SOCKS5 proxy.
 	tcpDialTimeout = 5 * time.Second
 
-// socks5HandshakeTimeout — deadline for the entire SOCKS5 handshake.
-	// 10s is generous for a loopback connection; 30s would leave each stalled
-	// goroutine blocking for far too long on a busy or weak device.
-	socks5HandshakeTimeout = 10 * time.Second
+	// socks5HandshakeTimeout — deadline for the entire SOCKS5 handshake.
+	socks5HandshakeTimeout = 30 * time.Second
 
 	// udpReadTimeout is the per-iteration deadline on the UDP relay socket
 	// (allows ctx.Done detection without blocking forever).
@@ -175,11 +173,9 @@ func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string) err
 		FDs:            []int{tunFd},
 		MTU:            uint32(mtu),
 		EthernetHeader: false, // TUN (raw IP), not TAP
-		// GSOMaxSize, GVisorGSOEnabled and GRO are intentionally NOT set.
-		// VpnService on Android does NOT support IFF_VNET_HDR, so gVisor GSO
-		// superframes are silently dropped by the kernel — causing near-zero
-		// throughput.  RXChecksumOffload is safe because gVisor validates
-		// checksums internally before passing to the stack regardless.
+		GSOMaxSize:       65535,
+		GVisorGSOEnabled: true,
+		GRO:              true,
 		RXChecksumOffload: true,
 	})
 	if err != nil {
@@ -226,20 +222,13 @@ func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string) err
 		conn := gonet.NewTCPConn(&wq, ep)
 
 		// Backpressure: wait up to 2s for a slot. Log if dropping.
-		// Use NewTimer (not time.After) so the timer is stopped immediately
-		// when a slot is available or ctx is cancelled — time.After leaves
-		// the underlying timer live for the full 2s on every fast-path
-		// connection, accumulating thousands of leaked timers under load.
-		bpTimer := time.NewTimer(2 * time.Second)
 		select {
 		case sem <- struct{}{}:
-			bpTimer.Stop()
-		case <-bpTimer.C:
+		case <-time.After(2 * time.Second):
 			bridgeErr("TCP backpressure: dropping %s (>%d concurrent)", dstAddr, tcpMaxInFlight)
 			_ = conn.Close()
 			return
 		case <-ctx.Done():
-			bpTimer.Stop()
 			_ = conn.Close()
 			return
 		}
@@ -343,8 +332,13 @@ func proxyTCPDirect(ctx context.Context, src net.Conn, dstAddr string, socksAddr
 // is dispatched to the DNS tunnel and the function returns — the browser's
 // resolver will retry after its timeout and the second attempt hits cache.
 func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string) {
+	cl := getAnyClient()
+	if cl == nil {
+		bridgeErr("DNS no engine client available for %s", dstAddr)
+		return
+	}
+
 	buf := make([]byte, 4096)
-	var idleTimeouts int
 	for {
 		if ctx.Err() != nil {
 			return
@@ -357,15 +351,10 @@ func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string) {
 		n, readErr := src.Read(buf)
 		if readErr != nil {
 			if netErr, ok := readErr.(net.Error); ok && netErr.Timeout() {
-				idleTimeouts++
-				if idleTimeouts >= 3 { // 3×5s = 15s idle — exit goroutine
-					return
-				}
 				continue
 			}
 			return
 		}
-		idleTimeouts = 0
 		if n == 0 {
 			continue
 		}
@@ -373,79 +362,23 @@ func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string) {
 		query := make([]byte, n)
 		copy(query, buf[:n])
 
-		// Resolve the engine client on every packet so we handle the case
-		// where the instance starts up after this goroutine is already running.
-		// Calling getAnyClient() once at goroutine start (outside the loop)
-		// means a nil return permanently closes the UDP session — all
-		// subsequent DNS queries from the same browser socket get no response.
-		cl := getAnyClient()
-		if cl == nil {
-			// Engine not ready yet — drop this packet, browser will retry.
-			tunBytesUp.Add(int64(n))
-			continue
-		}
-
-		// Drop queries when the tunnel session is not yet established.
-		// ProcessDNSQuery would dispatch to the tunnel only when SessionReady=true.
-		// If we call it while SessionReady=false, it creates a StatusPending cache
-		// entry and then silently skips dispatch.  The cache entry then blocks any
-		// re-dispatch for the full pendingTimeout window (default 300 s), meaning
-		// the poll loop below (30 s) can NEVER succeed — DNS always times out.
-		// DNS clients retry every 1–2 s automatically; by the second or third
-		// retry the session is ready and the query dispatches normally.
-		if !cl.SessionReady() {
-			tunBytesUp.Add(int64(n))
-			bridgeLog("DNS drop (session not ready) for %s — client will retry", dstAddr)
-			continue
-		}
-
-		// shared write-once flag + callback — no mutex needed: everything runs
-		// in this single goroutine (ProcessDNSQuery calls the callback synchronously).
-		var responseWritten bool
-		writeResp := func(resp []byte) {
+		isHit := cl.ProcessDNSQuery(query, nil, func(resp []byte) {
 			_, _ = src.Write(resp)
 			tunBytesDown.Add(int64(len(resp)))
-			responseWritten = true
-		}
+		})
 
-		isHit := cl.ProcessDNSQuery(query, nil, writeResp)
 		tunBytesUp.Add(int64(n))
 
 		if isHit {
 			bridgeLog("DNS cache hit for %s", dstAddr)
 		} else {
-			// Cache miss: query dispatched to the tunnel (fire-and-forget).
-			// Poll ProcessDNSQuery every 20 ms until HandleDNSQueryRes fills the
-			// cache entry (StatusReady), at which point the call hits the cache and
-			// invokes writeResp.  Calls while StatusPending do NOT re-dispatch
-			// (guarded by pendingTimeout in the cache), so each tick is just a cheap
-			// read-locked cache lookup.
-			// Use a Ticker (created once) instead of time.After (creates a new
-			// timer object on every iteration — ~250 per query miss at 5s/20ms).
-			deadline := time.Now().Add(5 * time.Second)
-			pollTicker := time.NewTicker(20 * time.Millisecond)
-		pollLoop:
-			for !responseWritten {
-				select {
-				case <-ctx.Done():
-					break pollLoop
-				case <-pollTicker.C:
-					if time.Now().After(deadline) {
-						break pollLoop
-					}
-					// Re-fetch client on each tick in case the instance restarted.
-					// Also guard against a client that lost its session mid-poll.
-					if cl = getAnyClient(); cl != nil && cl.SessionReady() {
-						_ = cl.ProcessDNSQuery(query, nil, writeResp)
-					}
-				}
-			}
-			pollTicker.Stop()
-			if responseWritten {
-				bridgeLog("DNS tunnel response for %s", dstAddr)
-			} else {
-				bridgeLog("DNS timeout (no tunnel response) for %s", dstAddr)
-			}
+			// Cache miss: ProcessDNSQuery dispatched the query to the tunnel but
+			// does NOT store or invoke the respond callback asynchronously.
+			// Return here so the gVisor UDP endpoint is closed (via defer
+			// conn.Close() in the caller), causing the DNS client to retry.
+			// The second attempt will find the response in cache and succeed.
+			bridgeLog("DNS cache miss for %s — closing endpoint to trigger retry", dstAddr)
+			return
 		}
 	}
 }
@@ -465,14 +398,8 @@ func socks5ConnectTCP(conn net.Conn, host string, port uint16) error {
 	if _, err := io.ReadFull(conn, authResp); err != nil {
 		return fmt.Errorf("auth read: %w", err)
 	}
-	if authResp[0] != 0x05 {
-		return fmt.Errorf("SOCKS5: unexpected version in auth response: %d", authResp[0])
-	}
-	if authResp[1] == 0xff {
-		return fmt.Errorf("SOCKS5: proxy rejected all auth methods (no acceptable method)")
-	}
-	if authResp[1] != 0x00 {
-		return fmt.Errorf("SOCKS5: unexpected auth method selected: %d", authResp[1])
+	if authResp[0] != 0x05 || authResp[1] != 0x00 {
+		return fmt.Errorf("unexpected auth response %v", authResp)
 	}
 
 	// CONNECT request
