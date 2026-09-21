@@ -132,7 +132,9 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: gomobile init
-        run: GOFLAGS="-mod=mod" gomobile init
+        run: |
+          GOFLAGS="-mod=mod" go get -tool golang.org/x/mobile
+          GOFLAGS="-mod=mod" gomobile init
 
       - name: Build gomobile .aar
         run: |
