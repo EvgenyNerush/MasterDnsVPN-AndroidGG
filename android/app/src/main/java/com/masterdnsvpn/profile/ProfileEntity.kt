@@ -42,6 +42,9 @@ data class ProfileEntity(
     val socks5User: String = "master_dns_vpn",
     val socks5Pass: String = "master_dns_vpn", // encrypted at rest
 
+    // Section 2.5: block AAAA in DNS response by default
+    val enableIpv6: Boolean = false,
+
     // Section 3: Local DNS
     val localDnsEnabled: Boolean = false,
     val localDnsIP: String = "127.0.0.1",

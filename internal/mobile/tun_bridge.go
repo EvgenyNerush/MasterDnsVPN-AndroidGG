@@ -76,6 +76,20 @@ const (
 
 )
 
+// ── Switch IPv6 ────────────────────────────────────────────────────────────────
+
+var (
+    enableIPv6 = false
+)
+
+func setEnableIPv6(val bool) {
+    enableIPv6 = val
+}
+
+func getEnableIPv6Flag() bool {
+    return enableIPv6
+}
+
 // ── Buffer pool ────────────────────────────────────────────────────────────────
 
 var relayBufPool = sync.Pool{
@@ -363,8 +377,19 @@ func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string) {
 		copy(query, buf[:n])
 
 		isHit := cl.ProcessDNSQuery(query, nil, func(resp []byte) {
-			_, _ = src.Write(resp)
-			tunBytesDown.Add(int64(len(resp)))
+			if enableIpv6 {
+				_, _ = src.Write(resp)
+				tunBytesDown.Add(int64(len(resp)))
+			} else {
+				filteredResp, wasFiltered = filterIpv6FromDnsResp(resp)
+				if wasFiltered {
+					_, _ = src.Write(filteredResp)
+						tunBytesDown.Add(int64(len(filteredResp)))
+				} else {}
+					_, _ = src.Write(resp)
+					tunBytesDown.Add(int64(len(resp)))
+				}
+			}
 		})
 
 		tunBytesUp.Add(int64(n))
