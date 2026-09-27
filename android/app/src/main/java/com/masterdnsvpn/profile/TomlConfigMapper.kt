@@ -68,6 +68,8 @@ object TomlConfigMapper {
             socks5Auth = bool("SOCKS5_AUTH") ?: base.socks5Auth,
             socks5User = str("SOCKS5_USER") ?: base.socks5User,
             socks5Pass = str("SOCKS5_PASS") ?: base.socks5Pass,
+            // Section 2.5
+            enableIpv6 = bool("ENABLE_IPV6") ?: base.enableIpv6,
             // Section 3
             localDnsEnabled = bool("LOCAL_DNS_ENABLED") ?: base.localDnsEnabled,
             localDnsIP = str("LOCAL_DNS_IP") ?: base.localDnsIP,

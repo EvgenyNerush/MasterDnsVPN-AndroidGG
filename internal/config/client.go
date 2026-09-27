@@ -36,6 +36,7 @@ type ClientConfig struct {
 	SOCKS5Auth                            bool              `toml:"SOCKS5_AUTH"`
 	SOCKS5User                            string            `toml:"SOCKS5_USER"`
 	SOCKS5Pass                            string            `toml:"SOCKS5_PASS"`
+	EnableIpv6                            bool              `toml:"ENABLE_IPV6"`
 	LocalDNSEnabled                       bool              `toml:"LOCAL_DNS_ENABLED"`
 	LocalDNSIP                            string            `toml:"LOCAL_DNS_IP"`
 	LocalDNSPort                          int               `toml:"LOCAL_DNS_PORT"`
@@ -62,7 +63,7 @@ type ClientConfig struct {
 	MinDownloadMTU                        int               `toml:"MIN_DOWNLOAD_MTU"`
 	MaxUploadMTU                          int               `toml:"MAX_UPLOAD_MTU"`
 	MaxDownloadMTU                        int               `toml:"MAX_DOWNLOAD_MTU"`
-	AutoRemoveLowMTUServers              bool              `toml:"AUTO_REMOVE_LOW_MTU_SERVERS"`
+	AutoRemoveLowMTUServers               bool              `toml:"AUTO_REMOVE_LOW_MTU_SERVERS"`
 	MTUTestRetries                        int               `toml:"MTU_TEST_RETRIES"`
 	MTUTestTimeout                        float64           `toml:"MTU_TEST_TIMEOUT"`
 	MTUTestParallelism                    int               `toml:"MTU_TEST_PARALLELISM"`
@@ -164,7 +165,7 @@ func defaultClientConfig() ClientConfig {
 		MinDownloadMTU:                        100,
 		MaxUploadMTU:                          64,
 		MaxDownloadMTU:                        140,
-		AutoRemoveLowMTUServers:              true,
+		AutoRemoveLowMTUServers:               true,
 		MTUTestRetries:                        2,
 		MTUTestTimeout:                        4.0,
 		MTUTestParallelism:                    16,

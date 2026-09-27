@@ -27,6 +27,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/miekg/dns"
+
 	"masterdnsvpn-go/internal/client"
 
 	"github.com/sagernet/gvisor/pkg/tcpip"
@@ -73,22 +75,7 @@ const (
 	// udpReadTimeout is the per-iteration deadline on the UDP relay socket
 	// (allows ctx.Done detection without blocking forever).
 	udpReadTimeout = 5 * time.Second
-
 )
-
-// ── Switch IPv6 ────────────────────────────────────────────────────────────────
-
-var (
-    enableIPv6 = false
-)
-
-func setEnableIPv6(val bool) {
-    enableIPv6 = val
-}
-
-func getEnableIPv6Flag() bool {
-    return enableIPv6
-}
 
 // ── Buffer pool ────────────────────────────────────────────────────────────────
 
@@ -184,12 +171,12 @@ func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string) err
 	s.SetTransportProtocolOption(tcp.ProtocolNumber, &recvBuf)
 
 	ep, err := fdbased.New(&fdbased.Options{
-		FDs:            []int{tunFd},
-		MTU:            uint32(mtu),
-		EthernetHeader: false, // TUN (raw IP), not TAP
-		GSOMaxSize:       65535,
-		GVisorGSOEnabled: true,
-		GRO:              true,
+		FDs:               []int{tunFd},
+		MTU:               uint32(mtu),
+		EthernetHeader:    false, // TUN (raw IP), not TAP
+		GSOMaxSize:        65535,
+		GVisorGSOEnabled:  true,
+		GRO:               true,
 		RXChecksumOffload: true,
 	})
 	if err != nil {
@@ -377,18 +364,31 @@ func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string) {
 		copy(query, buf[:n])
 
 		isHit := cl.ProcessDNSQuery(query, nil, func(resp []byte) {
-			if enableIpv6 {
+			if ctx.Value("EnableIpv6") == true {
 				_, _ = src.Write(resp)
 				tunBytesDown.Add(int64(len(resp)))
 			} else {
-				filteredResp, wasFiltered = filterIpv6FromDnsResp(resp)
-				if wasFiltered {
-					_, _ = src.Write(filteredResp)
-						tunBytesDown.Add(int64(len(filteredResp)))
-				} else {}
-					_, _ = src.Write(resp)
-					tunBytesDown.Add(int64(len(resp)))
+				dnsMsg := new(dns.Msg)
+				if err := dnsMsg.Unpack(resp); err != nil {
+					return
 				}
+
+				filteredAnswers := make([]dns.RR, 0, len(dnsMsg.Answer))
+				for _, ans := range dnsMsg.Answer {
+					if ans.Header().Rrtype != dns.TypeAAAA {
+						filteredAnswers = append(filteredAnswers, ans)
+					}
+				}
+				dnsMsg.Answer = filteredAnswers
+
+				// Re-pack the modified DNS message back to bytes
+				packedResp, err := dnsMsg.Pack()
+				if err != nil {
+					return
+				}
+
+				_, _ = src.Write(packedResp)
+				tunBytesDown.Add(int64(len(packedResp)))
 			}
 		})
 
@@ -544,8 +544,8 @@ func bidirectionalRelay(a, b net.Conn) {
 		}
 	}
 
-	go copyHalf(b, a, &tunBytesUp)  // upload:   TUN -> proxy
-	copyHalf(a, b, &tunBytesDown)   // download: proxy -> TUN
+	go copyHalf(b, a, &tunBytesUp) // upload:   TUN -> proxy
+	copyHalf(a, b, &tunBytesDown)  // download: proxy -> TUN
 	wg.Wait()
 }
 

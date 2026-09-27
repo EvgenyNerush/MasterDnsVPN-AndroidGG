@@ -46,7 +46,8 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
 // Android versions, so we recreate the table with the correct schema.
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("""
+        db.execSQL(
+            """
             CREATE TABLE IF NOT EXISTS `profiles_new` (
                 `id` TEXT NOT NULL,
                 `name` TEXT NOT NULL,
@@ -63,6 +64,7 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 `socks5Auth` INTEGER NOT NULL,
                 `socks5User` TEXT NOT NULL,
                 `socks5Pass` TEXT NOT NULL,
+                `enableIpv6` INTEGER NOT NULL,
                 `localDnsEnabled` INTEGER NOT NULL,
                 `localDnsIP` TEXT NOT NULL,
                 `localDnsPort` INTEGER NOT NULL,
@@ -149,13 +151,15 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 `identityLocked` INTEGER NOT NULL,
                 PRIMARY KEY(`id`)
             )
-        """.trimIndent())
-        db.execSQL("""
+        """.trimIndent()
+        )
+        db.execSQL(
+            """
             INSERT INTO `profiles_new`
             SELECT
                 `id`, `name`, `isMetaProfile`, `createdAt`, `updatedAt`, `tunnelMode`,
                 `domains`, `dataEncryptionMethod`, `encryptionKey`, `protocolType`,
-                `listenIP`, `listenPort`, `socks5Auth`, `socks5User`, `socks5Pass`,
+                `listenIP`, `listenPort`, `socks5Auth`, `socks5User`, `socks5Pass`, `enableIpv6`,
                 `localDnsEnabled`, `localDnsIP`, `localDnsPort`, `localDnsCacheMaxRecords`,
                 `localDnsCacheTtlSeconds`, `localDnsPendingTimeoutSec`, `dnsResponseFragmentTimeoutSeconds`,
                 `localDnsCachePersist`, `localDnsCacheFlushSec`, `resolverBalancingStrategy`,
@@ -183,7 +187,8 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 `arqDataNackRepeatSeconds`, `arqTerminalDrainTimeoutSec`, `arqTerminalAckWaitTimeoutSec`,
                 `resolversText`, `identityLocked`
             FROM `profiles`
-        """.trimIndent())
+        """.trimIndent()
+        )
         db.execSQL("DROP TABLE `profiles`")
         db.execSQL("ALTER TABLE `profiles_new` RENAME TO `profiles`")
     }
