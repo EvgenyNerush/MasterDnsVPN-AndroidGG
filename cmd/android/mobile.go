@@ -36,8 +36,6 @@ type MobileConfig struct {
 	SOCKS5Auth   bool
 	SOCKS5User   string
 	SOCKS5Pass   string
-	// Enable IPV6
-	EnableIpv6 bool
 	// Local DNS
 	LocalDNSEnabled         bool
 	LocalDNSIP              string
@@ -224,8 +222,8 @@ func GetLastError(key string) string {
 // tunFd is the raw fd from Android's ParcelFileDescriptor.getFd();
 // mtu is the MTU of the TUN interface (1500 by default);
 // listenAddr is "host:port" of the SOCKS5 proxy (e.g. "127.0.0.1:1080").
-func StartTunBridge(tunFd int32, mtu int32, listenAddr string) error {
-	return mobile.StartTunBridge(tunFd, mtu, listenAddr)
+func StartTunBridge(tunFd int32, mtu int32, listenAddr string, disableIp6 bool) error {
+	return mobile.StartTunBridge(tunFd, mtu, listenAddr, disableIp6)
 }
 
 // StopTunBridge tears down the tun2socks bridge.

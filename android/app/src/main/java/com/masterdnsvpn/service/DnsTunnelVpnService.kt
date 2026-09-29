@@ -48,6 +48,10 @@ class DnsTunnelVpnService : VpnService() {
         // dynamically by probing resolvers.  The Go layer itself defaults to 1500 when
         // the caller passes 0.  1500 = standard Ethernet and is safe on all Android paths.
         private const val TUN_INTERFACE_MTU = 1500
+
+        // Immediately discard AAAA records in DNS responses to prevent the client
+        // from waiting for a response if the server does not have an IPv6 address.
+        private const val DISABLE_IP6 = true
     }
 
     @Inject lateinit var bridge: GoMobileBridge
@@ -231,7 +235,7 @@ class DnsTunnelVpnService : VpnService() {
                             logManager.append(LogEntry(level = LogLevel.INFO, timestamp = "system", message = "TUN bridge started → $balancerAddr (meta, ${profiles.size} profiles)"))
                             bridgeStarted = true
                         }
-                        bridge.startTunBridge(tunFd.fd, TUN_INTERFACE_MTU, balancerAddr)
+                        bridge.startTunBridge(tunFd.fd, TUN_INTERFACE_MTU, balancerAddr, DISABLE_IP6)
                         // No exception = context.Canceled = clean stop (network bounce or explicit stop)
                         cleanExit = true
                     } catch (e: kotlinx.coroutines.CancellationException) {
@@ -322,7 +326,7 @@ class DnsTunnelVpnService : VpnService() {
                     while (isActive && !intentionalStop) {
                         var cleanExit = false
                         try {
-                            bridge.startTunBridge(tunFd.fd, TUN_INTERFACE_MTU, socksAddr)
+                            bridge.startTunBridge(tunFd.fd, TUN_INTERFACE_MTU, socksAddr, DISABLE_IP6)
                             // No exception = context.Canceled = clean stop (network bounce or explicit stop)
                             cleanExit = true
                         } catch (e: kotlinx.coroutines.CancellationException) {

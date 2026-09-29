@@ -37,7 +37,7 @@ var (
 //	mtu        – MTU of the TUN interface (typically 1500).
 //	listenAddr – "host:port" of the SOCKS5 proxy started by StartInstance
 //	             (e.g. "127.0.0.1:1080").
-func StartTunBridge(tunFd int32, mtu int32, listenAddr string) error {
+func StartTunBridge(tunFd int32, mtu int32, listenAddr string, disableIp6 bool) error {
 	tunMu.Lock()
 
 	if tunCancel != nil {
@@ -74,7 +74,7 @@ func StartTunBridge(tunFd int32, mtu int32, listenAddr string) error {
 			tunMu.Unlock()
 			close(done)
 		}()
-		runErr = runTunBridge(ctx, int(tunFd), tunMTU, listenAddr)
+		runErr = runTunBridge(ctx, int(tunFd), tunMTU, listenAddr, disableIp6)
 		if runErr != nil && !errors.Is(runErr, context.Canceled) {
 			logTunError(fmt.Sprintf("tun bridge exited: %v", runErr))
 		}

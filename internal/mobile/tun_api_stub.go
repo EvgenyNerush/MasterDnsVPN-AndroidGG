@@ -13,7 +13,7 @@
 package mobile
 
 // StartTunBridge is a no-op on non-Android/Linux platforms.
-func StartTunBridge(_ int32, _ int32, _ string) error {
+func StartTunBridge(_ int32, _ int32, _ string, _ bool) error {
 	return errTunNotSupported
 }
 

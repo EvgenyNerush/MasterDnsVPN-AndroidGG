@@ -117,7 +117,7 @@ func bridgeErr(format string, args ...any) {
 // runTunBridge creates a gVisor TCP/IP stack over the given TUN file descriptor
 // and proxies every TCP/UDP connection through the SOCKS5 server at socksAddr.
 // This function blocks until ctx is cancelled.
-func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string) error {
+func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string, disableIp6 bool) error {
 	tunBytesUp.Store(0)
 	tunBytesDown.Store(0)
 
@@ -272,7 +272,7 @@ func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string) err
 			if ctx.Err() != nil {
 				return
 			}
-			proxyDNSDirect(ctx, conn, dstAddr)
+			proxyDNSDirect(ctx, conn, dstAddr, disableIp6)
 		}()
 		return true
 	})
@@ -332,7 +332,7 @@ func proxyTCPDirect(ctx context.Context, src net.Conn, dstAddr string, socksAddr
 // On cache hit the response is returned immediately. On cache miss the query
 // is dispatched to the DNS tunnel and the function returns — the browser's
 // resolver will retry after its timeout and the second attempt hits cache.
-func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string) {
+func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string, disableIp6 bool) {
 	cl := getAnyClient()
 	if cl == nil {
 		bridgeErr("DNS no engine client available for %s", dstAddr)
@@ -364,7 +364,7 @@ func proxyDNSDirect(ctx context.Context, src net.Conn, dstAddr string) {
 		copy(query, buf[:n])
 
 		isHit := cl.ProcessDNSQuery(query, nil, func(resp []byte) {
-			if ctx.Value("EnableIpv6") == true {
+			if !disableIp6 {
 				_, _ = src.Write(resp)
 				tunBytesDown.Add(int64(len(resp)))
 			} else {

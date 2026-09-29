@@ -36,7 +36,6 @@ type ClientConfig struct {
 	SOCKS5Auth                            bool              `toml:"SOCKS5_AUTH"`
 	SOCKS5User                            string            `toml:"SOCKS5_USER"`
 	SOCKS5Pass                            string            `toml:"SOCKS5_PASS"`
-	EnableIpv6                            bool              `toml:"ENABLE_IPV6"`
 	LocalDNSEnabled                       bool              `toml:"LOCAL_DNS_ENABLED"`
 	LocalDNSIP                            string            `toml:"LOCAL_DNS_IP"`
 	LocalDNSPort                          int               `toml:"LOCAL_DNS_PORT"`

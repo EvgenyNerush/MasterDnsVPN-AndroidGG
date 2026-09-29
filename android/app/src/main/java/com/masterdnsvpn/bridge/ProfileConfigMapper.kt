@@ -28,9 +28,6 @@ object ProfileConfigMapper {
         c.setSOCKS5User(p.socks5User)
         c.setSOCKS5Pass(p.socks5Pass)
 
-        // Section 2.5: block AAAA in DNS response
-        c.enableIpv6(p.enableIpv6)
-
         // Section 3: Local DNS
         c.localDNSEnabled = p.localDnsEnabled
         c.localDNSIP = p.localDnsIP

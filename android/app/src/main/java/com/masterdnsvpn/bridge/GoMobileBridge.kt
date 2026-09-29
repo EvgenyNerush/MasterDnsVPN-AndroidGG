@@ -173,8 +173,8 @@ class GoMobileBridge @Inject constructor(
      * @param mtu        MTU of the TUN interface (1500 is the default).
      * @param listenAddr "host:port" of the running SOCKS5 proxy, e.g. "127.0.0.1:1080".
      */
-    fun startTunBridge(tunFd: Int, mtu: Int, listenAddr: String) {
-        Mobile.startTunBridge(tunFd, mtu, listenAddr)
+    fun startTunBridge(tunFd: Int, mtu: Int, listenAddr: String, disableIp6: Boolean) {
+        Mobile.startTunBridge(tunFd, mtu, listenAddr, disableIp6)
     }
 
     /** Stop the tun2socks bridge. Safe to call if the bridge was never started. */

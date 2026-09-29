@@ -17,7 +17,6 @@ type MobileClientConfig struct {
 	SOCKS5Auth                            bool
 	SOCKS5User                            string
 	SOCKS5Pass                            string
-	EnableIpv6                            bool
 	LocalDNSEnabled                       bool
 	LocalDNSIP                            string
 	LocalDNSPort                          int
@@ -109,7 +108,7 @@ func NewDefaultMobileClientConfig() MobileClientConfig {
 		Domains: "", DataEncryptionMethod: 1, EncryptionKey: "",
 		ProtocolType: "SOCKS5", ListenIP: "127.0.0.1", ListenPort: 18000,
 		SOCKS5Auth: false, SOCKS5User: "master_dns_vpn", SOCKS5Pass: "master_dns_vpn",
-		EnableIpv6: false, LocalDNSEnabled: false, LocalDNSIP: "127.0.0.1", LocalDNSPort: 5353,
+		LocalDNSEnabled: false, LocalDNSIP: "127.0.0.1", LocalDNSPort: 5353,
 		LocalDNSCacheMaxRecords: 5000, LocalDNSCacheTTLSeconds: 28800.0,
 		LocalDNSPendingTimeoutSec: 300.0, LocalDNSCachePersist: true, LocalDNSCacheFlushSec: 60.0,
 		ResolverBalancingStrategy: 2, PacketDuplicationCount: 5, SetupPacketDuplicationCount: 5,
@@ -192,7 +191,7 @@ func writeConfigTOML(cfg MobileClientConfig, path string) error {
 	domainsToml := "[" + strings.Join(domainsArr, ", ") + "]"
 	tpl := "DOMAINS = %s\nDATA_ENCRYPTION_METHOD = %d\nENCRYPTION_KEY = %q\n" +
 		"PROTOCOL_TYPE = %q\nLISTEN_IP = %q\nLISTEN_PORT = %d\n" +
-		"SOCKS5_AUTH = %t\nSOCKS5_USER = %q\nSOCKS5_PASS = %q\nENABLE_IPV6 = %t\n" +
+		"SOCKS5_AUTH = %t\nSOCKS5_USER = %q\nSOCKS5_PASS = %q\n" +
 		"LOCAL_DNS_ENABLED = %t\nLOCAL_DNS_IP = %q\nLOCAL_DNS_PORT = %d\n" +
 		"LOCAL_DNS_CACHE_MAX_RECORDS = %d\nLOCAL_DNS_CACHE_TTL_SECONDS = %g\n" +
 		"LOCAL_DNS_PENDING_TIMEOUT_SECONDS = %g\nLOCAL_DNS_CACHE_PERSIST_TO_FILE = %t\n" +
@@ -237,7 +236,7 @@ func writeConfigTOML(cfg MobileClientConfig, path string) error {
 	_, err = fmt.Fprintf(f, tpl,
 		domainsToml, cfg.DataEncryptionMethod, cfg.EncryptionKey,
 		cfg.ProtocolType, cfg.ListenIP, cfg.ListenPort, cfg.SOCKS5Auth, cfg.SOCKS5User, cfg.SOCKS5Pass,
-		cfg.EnableIpv6, cfg.LocalDNSEnabled, cfg.LocalDNSIP, cfg.LocalDNSPort, cfg.LocalDNSCacheMaxRecords,
+		cfg.LocalDNSEnabled, cfg.LocalDNSIP, cfg.LocalDNSPort, cfg.LocalDNSCacheMaxRecords,
 		cfg.LocalDNSCacheTTLSeconds, cfg.LocalDNSPendingTimeoutSec, cfg.LocalDNSCachePersist, cfg.LocalDNSCacheFlushSec,
 		cfg.ResolverBalancingStrategy, cfg.PacketDuplicationCount, cfg.SetupPacketDuplicationCount,
 		cfg.StreamResolverFailoverResendThreshold, cfg.StreamResolverFailoverCooldownSec,

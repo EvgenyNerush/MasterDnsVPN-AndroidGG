@@ -316,11 +316,6 @@ fun ProfileEditScreen(
                 }
             }
 
-            // ── Section 2.5: Block AAAA in DNS response ────────────────────────────────
-            ExpandableSection("2.5. Block AAAA in DNS response") {
-                SwitchRow("ENABLE_IPV6", profile.localDnsEnabled) { vm.update { copy(enableIpv6 = it) } }
-            }
-
             // ── Section 3: Local DNS Service ───────────────────────────────────
             ExpandableSection("3. Local DNS Service") {
                 SwitchRow("LOCAL_DNS_ENABLED", profile.localDnsEnabled) { vm.update { copy(localDnsEnabled = it) } }

@@ -64,7 +64,6 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 `socks5Auth` INTEGER NOT NULL,
                 `socks5User` TEXT NOT NULL,
                 `socks5Pass` TEXT NOT NULL,
-                `enableIpv6` INTEGER NOT NULL,
                 `localDnsEnabled` INTEGER NOT NULL,
                 `localDnsIP` TEXT NOT NULL,
                 `localDnsPort` INTEGER NOT NULL,
@@ -159,7 +158,7 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
             SELECT
                 `id`, `name`, `isMetaProfile`, `createdAt`, `updatedAt`, `tunnelMode`,
                 `domains`, `dataEncryptionMethod`, `encryptionKey`, `protocolType`,
-                `listenIP`, `listenPort`, `socks5Auth`, `socks5User`, `socks5Pass`, `enableIpv6`,
+                `listenIP`, `listenPort`, `socks5Auth`, `socks5User`, `socks5Pass`,
                 `localDnsEnabled`, `localDnsIP`, `localDnsPort`, `localDnsCacheMaxRecords`,
                 `localDnsCacheTtlSeconds`, `localDnsPendingTimeoutSec`, `dnsResponseFragmentTimeoutSeconds`,
                 `localDnsCachePersist`, `localDnsCacheFlushSec`, `resolverBalancingStrategy`,
