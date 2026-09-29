@@ -68,8 +68,6 @@ object TomlConfigMapper {
             socks5Auth = bool("SOCKS5_AUTH") ?: base.socks5Auth,
             socks5User = str("SOCKS5_USER") ?: base.socks5User,
             socks5Pass = str("SOCKS5_PASS") ?: base.socks5Pass,
-            // Section 2.5
-            enableIpv6 = bool("ENABLE_IPV6") ?: base.enableIpv6,
             // Section 3
             localDnsEnabled = bool("LOCAL_DNS_ENABLED") ?: base.localDnsEnabled,
             localDnsIP = str("LOCAL_DNS_IP") ?: base.localDnsIP,
@@ -77,23 +75,30 @@ object TomlConfigMapper {
             localDnsCacheMaxRecords = int("LOCAL_DNS_CACHE_MAX_RECORDS") ?: base.localDnsCacheMaxRecords,
             localDnsCacheTtlSeconds = dbl("LOCAL_DNS_CACHE_TTL_SECONDS") ?: base.localDnsCacheTtlSeconds,
             localDnsPendingTimeoutSec = dbl("LOCAL_DNS_PENDING_TIMEOUT_SECONDS") ?: base.localDnsPendingTimeoutSec,
-            dnsResponseFragmentTimeoutSeconds = dbl("DNS_RESPONSE_FRAGMENT_TIMEOUT_SECONDS") ?: base.dnsResponseFragmentTimeoutSeconds,
+            dnsResponseFragmentTimeoutSeconds = dbl("DNS_RESPONSE_FRAGMENT_TIMEOUT_SECONDS")
+                ?: base.dnsResponseFragmentTimeoutSeconds,
             localDnsCachePersist = bool("LOCAL_DNS_CACHE_PERSIST_TO_FILE") ?: base.localDnsCachePersist,
             localDnsCacheFlushSec = dbl("LOCAL_DNS_CACHE_FLUSH_INTERVAL_SECONDS") ?: base.localDnsCacheFlushSec,
             // Section 4
             resolverBalancingStrategy = int("RESOLVER_BALANCING_STRATEGY") ?: base.resolverBalancingStrategy,
             packetDuplicationCount = int("PACKET_DUPLICATION_COUNT") ?: base.packetDuplicationCount,
             setupPacketDuplicationCount = int("SETUP_PACKET_DUPLICATION_COUNT") ?: base.setupPacketDuplicationCount,
-            streamResolverFailoverResendThreshold = int("STREAM_RESOLVER_FAILOVER_RESEND_THRESHOLD") ?: base.streamResolverFailoverResendThreshold,
-            streamResolverFailoverCooldownSec = dbl("STREAM_RESOLVER_FAILOVER_COOLDOWN") ?: base.streamResolverFailoverCooldownSec,
-            recheckInactiveServersEnabled = bool("RECHECK_INACTIVE_SERVERS_ENABLED") ?: base.recheckInactiveServersEnabled,
-            recheckInactiveIntervalSeconds = dbl("RECHECK_INACTIVE_INTERVAL_SECONDS") ?: base.recheckInactiveIntervalSeconds,
+            streamResolverFailoverResendThreshold = int("STREAM_RESOLVER_FAILOVER_RESEND_THRESHOLD")
+                ?: base.streamResolverFailoverResendThreshold,
+            streamResolverFailoverCooldownSec = dbl("STREAM_RESOLVER_FAILOVER_COOLDOWN")
+                ?: base.streamResolverFailoverCooldownSec,
+            recheckInactiveServersEnabled = bool("RECHECK_INACTIVE_SERVERS_ENABLED")
+                ?: base.recheckInactiveServersEnabled,
+            recheckInactiveIntervalSeconds = dbl("RECHECK_INACTIVE_INTERVAL_SECONDS")
+                ?: base.recheckInactiveIntervalSeconds,
             recheckServerIntervalSeconds = dbl("RECHECK_SERVER_INTERVAL_SECONDS") ?: base.recheckServerIntervalSeconds,
             recheckBatchSize = int("RECHECK_BATCH_SIZE") ?: base.recheckBatchSize,
             autoDisableTimeoutServers = bool("AUTO_DISABLE_TIMEOUT_SERVERS") ?: base.autoDisableTimeoutServers,
-            autoDisableTimeoutWindowSeconds = dbl("AUTO_DISABLE_TIMEOUT_WINDOW_SECONDS") ?: base.autoDisableTimeoutWindowSeconds,
+            autoDisableTimeoutWindowSeconds = dbl("AUTO_DISABLE_TIMEOUT_WINDOW_SECONDS")
+                ?: base.autoDisableTimeoutWindowSeconds,
             autoDisableMinObservations = int("AUTO_DISABLE_MIN_OBSERVATIONS") ?: base.autoDisableMinObservations,
-            autoDisableCheckIntervalSeconds = dbl("AUTO_DISABLE_CHECK_INTERVAL_SECONDS") ?: base.autoDisableCheckIntervalSeconds,
+            autoDisableCheckIntervalSeconds = dbl("AUTO_DISABLE_CHECK_INTERVAL_SECONDS")
+                ?: base.autoDisableCheckIntervalSeconds,
             // Section 5
             baseEncodeData = bool("BASE_ENCODE_DATA") ?: base.baseEncodeData,
             uploadCompressionType = int("UPLOAD_COMPRESSION_TYPE") ?: base.uploadCompressionType,
@@ -114,29 +119,41 @@ object TomlConfigMapper {
             mtuUsingSeparatorText = str("MTU_USING_SECTION_SEPARATOR_TEXT") ?: base.mtuUsingSeparatorText,
             mtuRemovedServerLogFormat = str("MTU_REMOVED_SERVER_LOG_FORMAT") ?: base.mtuRemovedServerLogFormat,
             mtuAddedServerLogFormat = str("MTU_ADDED_SERVER_LOG_FORMAT") ?: base.mtuAddedServerLogFormat,
-            mtuReactiveAddedServerLogFormat = str("MTU_REACTIVE_ADDED_SERVER_LOG_FORMAT") ?: base.mtuReactiveAddedServerLogFormat,
+            mtuReactiveAddedServerLogFormat = str("MTU_REACTIVE_ADDED_SERVER_LOG_FORMAT")
+                ?: base.mtuReactiveAddedServerLogFormat,
             // Section 7 Workers
-            rxTxWorkers = int("RX_TX_WORKERS") ?: maxOf(int("TUNNEL_READER_WORKERS") ?: 0, int("TUNNEL_WRITER_WORKERS") ?: 0).takeIf { it > 0 } ?: base.rxTxWorkers,
+            rxTxWorkers = int("RX_TX_WORKERS") ?: maxOf(
+                int("TUNNEL_READER_WORKERS") ?: 0,
+                int("TUNNEL_WRITER_WORKERS") ?: 0
+            ).takeIf { it > 0 } ?: base.rxTxWorkers,
             tunnelProcessWorkers = int("TUNNEL_PROCESS_WORKERS") ?: base.tunnelProcessWorkers,
             tunnelPacketTimeoutSec = dbl("TUNNEL_PACKET_TIMEOUT_SECONDS") ?: base.tunnelPacketTimeoutSec,
-            dispatcherIdlePollIntervalSeconds = dbl("DISPATCHER_IDLE_POLL_INTERVAL_SECONDS") ?: base.dispatcherIdlePollIntervalSeconds,
+            dispatcherIdlePollIntervalSeconds = dbl("DISPATCHER_IDLE_POLL_INTERVAL_SECONDS")
+                ?: base.dispatcherIdlePollIntervalSeconds,
             txChannelSize = int("TX_CHANNEL_SIZE") ?: base.txChannelSize,
             rxChannelSize = int("RX_CHANNEL_SIZE") ?: base.rxChannelSize,
-            resolverUdpConnectionPoolSize = int("RESOLVER_UDP_CONNECTION_POOL_SIZE") ?: base.resolverUdpConnectionPoolSize,
+            resolverUdpConnectionPoolSize = int("RESOLVER_UDP_CONNECTION_POOL_SIZE")
+                ?: base.resolverUdpConnectionPoolSize,
             streamQueueInitialCapacity = int("STREAM_QUEUE_INITIAL_CAPACITY") ?: base.streamQueueInitialCapacity,
             orphanQueueInitialCapacity = int("ORPHAN_QUEUE_INITIAL_CAPACITY") ?: base.orphanQueueInitialCapacity,
-            dnsResponseFragmentStoreCap = int("DNS_RESPONSE_FRAGMENT_STORE_CAPACITY") ?: base.dnsResponseFragmentStoreCap,
-            socksUdpAssociateReadTimeoutSeconds = dbl("SOCKS_UDP_ASSOCIATE_READ_TIMEOUT_SECONDS") ?: base.socksUdpAssociateReadTimeoutSeconds,
-            clientTerminalStreamRetentionSeconds = dbl("CLIENT_TERMINAL_STREAM_RETENTION_SECONDS") ?: base.clientTerminalStreamRetentionSeconds,
-            clientCancelledSetupRetentionSeconds = dbl("CLIENT_CANCELLED_SETUP_RETENTION_SECONDS") ?: base.clientCancelledSetupRetentionSeconds,
+            dnsResponseFragmentStoreCap = int("DNS_RESPONSE_FRAGMENT_STORE_CAPACITY")
+                ?: base.dnsResponseFragmentStoreCap,
+            socksUdpAssociateReadTimeoutSeconds = dbl("SOCKS_UDP_ASSOCIATE_READ_TIMEOUT_SECONDS")
+                ?: base.socksUdpAssociateReadTimeoutSeconds,
+            clientTerminalStreamRetentionSeconds = dbl("CLIENT_TERMINAL_STREAM_RETENTION_SECONDS")
+                ?: base.clientTerminalStreamRetentionSeconds,
+            clientCancelledSetupRetentionSeconds = dbl("CLIENT_CANCELLED_SETUP_RETENTION_SECONDS")
+                ?: base.clientCancelledSetupRetentionSeconds,
             sessionInitRetryBaseSeconds = dbl("SESSION_INIT_RETRY_BASE_SECONDS") ?: base.sessionInitRetryBaseSeconds,
             sessionInitRetryStepSeconds = dbl("SESSION_INIT_RETRY_STEP_SECONDS") ?: base.sessionInitRetryStepSeconds,
             sessionInitRetryLinearAfter = int("SESSION_INIT_RETRY_LINEAR_AFTER") ?: base.sessionInitRetryLinearAfter,
             sessionInitRetryMaxSeconds = dbl("SESSION_INIT_RETRY_MAX_SECONDS") ?: base.sessionInitRetryMaxSeconds,
-            sessionInitBusyRetryIntervalSeconds = dbl("SESSION_INIT_BUSY_RETRY_INTERVAL_SECONDS") ?: base.sessionInitBusyRetryIntervalSeconds,
+            sessionInitBusyRetryIntervalSeconds = dbl("SESSION_INIT_BUSY_RETRY_INTERVAL_SECONDS")
+                ?: base.sessionInitBusyRetryIntervalSeconds,
             sessionInitRacingCount = int("SESSION_INIT_RACING_COUNT") ?: base.sessionInitRacingCount,
             // Section 8 Ping
-            pingAggressiveIntervalSeconds = dbl("PING_AGGRESSIVE_INTERVAL_SECONDS") ?: base.pingAggressiveIntervalSeconds,
+            pingAggressiveIntervalSeconds = dbl("PING_AGGRESSIVE_INTERVAL_SECONDS")
+                ?: base.pingAggressiveIntervalSeconds,
             pingLazyIntervalSeconds = dbl("PING_LAZY_INTERVAL_SECONDS") ?: base.pingLazyIntervalSeconds,
             pingCooldownIntervalSeconds = dbl("PING_COOLDOWN_INTERVAL_SECONDS") ?: base.pingCooldownIntervalSeconds,
             pingColdIntervalSeconds = dbl("PING_COLD_INTERVAL_SECONDS") ?: base.pingColdIntervalSeconds,
@@ -156,10 +173,12 @@ object TomlConfigMapper {
             arqControlPacketTtlSeconds = dbl("ARQ_CONTROL_PACKET_TTL_SECONDS") ?: base.arqControlPacketTtlSeconds,
             arqMaxDataRetries = int("ARQ_MAX_DATA_RETRIES") ?: base.arqMaxDataRetries,
             arqDataNackMaxGap = int("ARQ_DATA_NACK_MAX_GAP") ?: base.arqDataNackMaxGap,
-            arqDataNackInitialDelaySeconds = dbl("ARQ_DATA_NACK_INITIAL_DELAY_SECONDS") ?: base.arqDataNackInitialDelaySeconds,
+            arqDataNackInitialDelaySeconds = dbl("ARQ_DATA_NACK_INITIAL_DELAY_SECONDS")
+                ?: base.arqDataNackInitialDelaySeconds,
             arqDataNackRepeatSeconds = dbl("ARQ_DATA_NACK_REPEAT_SECONDS") ?: base.arqDataNackRepeatSeconds,
             arqTerminalDrainTimeoutSec = dbl("ARQ_TERMINAL_DRAIN_TIMEOUT_SECONDS") ?: base.arqTerminalDrainTimeoutSec,
-            arqTerminalAckWaitTimeoutSec = dbl("ARQ_TERMINAL_ACK_WAIT_TIMEOUT_SECONDS") ?: base.arqTerminalAckWaitTimeoutSec,
+            arqTerminalAckWaitTimeoutSec = dbl("ARQ_TERMINAL_ACK_WAIT_TIMEOUT_SECONDS")
+                ?: base.arqTerminalAckWaitTimeoutSec,
             // Section 10 Logging
             logLevel = str("LOG_LEVEL") ?: base.logLevel,
             // Identity lock flag (app-specific, not a Go config key)
