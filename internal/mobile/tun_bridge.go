@@ -210,6 +210,14 @@ func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string, dis
 
 	tcpFwd := tcp.NewForwarder(s, 0, tcpMaxInFlight, func(r *tcp.ForwarderRequest) {
 		id := r.ID()
+
+		// Block IPv6 connections if disableIp6 is true
+		if disableIp6 && id.LocalAddress.BitLen() != 32 {
+			bridgeLog("Blocking IPv6 connection to %s", id.LocalAddress.String())
+			r.Complete(true) // Send RST
+			return
+		}
+
 		dstAddr := net.JoinHostPort(id.LocalAddress.String(), fmt.Sprintf("%d", id.LocalPort))
 
 		var wq waiter.Queue
@@ -251,6 +259,13 @@ func runTunBridge(ctx context.Context, tunFd int, mtu int, socksAddr string, dis
 	// Port Unreachable → browsers fall back to TCP immediately.
 	udpFwd := udp.NewForwarder(s, func(r *udp.ForwarderRequest) bool {
 		id := r.ID()
+
+		// Block IPv6 connections if disableIp6 is true
+		if disableIp6 && id.LocalAddress.BitLen() != 32 {
+			bridgeLog("Blocking IPv6 UDP flow to %s:%d", id.LocalAddress.String(), id.LocalPort)
+			return false // gVisor responds unreachable
+		}
+
 		dstPort := id.LocalPort
 
 		if dstPort != 53 {
